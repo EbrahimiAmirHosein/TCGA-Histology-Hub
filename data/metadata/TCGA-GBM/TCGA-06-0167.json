@@ -1,0 +1,30 @@
+[
+  {
+    "id": "06eccca1-1d4a-4c72-b695-1e4976e4fc01",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-06-0167"
+      }
+    ],
+    "file_name": "TCGA-06-0167-01A-01-BS1.4f46bab5-6005-4c60-898c-16db6cb529ea.svs",
+    "md5sum": "3d3baa212b38a1f43da1f138efc2c357",
+    "file_id": "06eccca1-1d4a-4c72-b695-1e4976e4fc01",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 44752545
+  },
+  {
+    "id": "78260b70-2058-456c-8abd-3cb405c95808",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-06-0167"
+      }
+    ],
+    "file_name": "TCGA-06-0167-01A-01-TS1.2e426116-5ee1-4aa0-bdb8-a0f6ef565a57.svs",
+    "md5sum": "767686938681714c4a290a422a02fe20",
+    "file_id": "78260b70-2058-456c-8abd-3cb405c95808",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 337319831
+  }
+]

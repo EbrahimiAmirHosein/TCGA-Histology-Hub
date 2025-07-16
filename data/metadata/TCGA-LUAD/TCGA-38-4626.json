@@ -1,0 +1,72 @@
+[
+  {
+    "id": "93f6f658-10e3-4009-b657-77ec02c592ae",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-38-4626"
+      }
+    ],
+    "file_name": "TCGA-38-4626-01A-01-BS1.57181f5e-1b4d-415a-8acc-9dc40dd03f7b.svs",
+    "md5sum": "84c93b3beb3d535b63d99f8e18423296",
+    "file_id": "93f6f658-10e3-4009-b657-77ec02c592ae",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 63435805
+  },
+  {
+    "id": "8083350f-0a4b-47f2-94da-fe8200d03f2d",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-38-4626"
+      }
+    ],
+    "file_name": "TCGA-38-4626-01Z-00-DX1.142bc018-bd79-4db9-84e2-f83a617ea92a.svs",
+    "md5sum": "e9d7fd97aa0c9fbb50b38634cb4c2ff7",
+    "file_id": "8083350f-0a4b-47f2-94da-fe8200d03f2d",
+    "experimental_strategy": "Diagnostic Slide",
+    "file_size": 801603309
+  },
+  {
+    "id": "269a4695-9e0f-4b33-a7b5-8e923112e86a",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-38-4626"
+      }
+    ],
+    "file_name": "TCGA-38-4626-01A-01-TS1.b856b974-e498-4a8a-a649-bc321c90622a.svs",
+    "md5sum": "e36ab75b6f06afff566192de7bc4016d",
+    "file_id": "269a4695-9e0f-4b33-a7b5-8e923112e86a",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 82801979
+  },
+  {
+    "id": "adfa9747-cd57-4a1f-ab67-c2890c4f689a",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-38-4626"
+      }
+    ],
+    "file_name": "TCGA-38-4626-11A-01-TS1.ec7af6b6-9a36-4f33-b2b2-1fcb7092ae5a.svs",
+    "md5sum": "f6ecf335cf65b99638a23a5b5be1a064",
+    "file_id": "adfa9747-cd57-4a1f-ab67-c2890c4f689a",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 39225993
+  },
+  {
+    "id": "9b0d7b5d-ef7e-4b91-bd41-7e3228e28512",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-38-4626"
+      }
+    ],
+    "file_name": "TCGA-38-4626-11A-01-BS1.47b1c9ee-84cc-49fc-a707-b24c3bb7d7f3.svs",
+    "md5sum": "6fe3d43ddb1a963feba92a35f22b730f",
+    "file_id": "9b0d7b5d-ef7e-4b91-bd41-7e3228e28512",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 43890455
+  }
+]
