@@ -1,0 +1,44 @@
+[
+  {
+    "id": "0834dfbb-1b2b-4125-a95b-d43a829c6fc7",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-HC-7079"
+      }
+    ],
+    "file_name": "TCGA-HC-7079-01A-01-TS1.2e112c76-4fa4-4a7a-a68e-745bb3fea37a.svs",
+    "md5sum": "4fb797e209dbcaee63a236733450782d",
+    "file_id": "0834dfbb-1b2b-4125-a95b-d43a829c6fc7",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 94149187
+  },
+  {
+    "id": "344c94f5-830b-46bf-a1f4-06f340ec8389",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-HC-7079"
+      }
+    ],
+    "file_name": "TCGA-HC-7079-01A-01-BS1.4fe73719-f126-4d99-9c6b-01c2edce0fce.svs",
+    "md5sum": "40a231baccdf62740add9edad1b6f797",
+    "file_id": "344c94f5-830b-46bf-a1f4-06f340ec8389",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 49140123
+  },
+  {
+    "id": "e5a38d45-00b9-43d9-ad1b-bb94585869f4",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-HC-7079"
+      }
+    ],
+    "file_name": "TCGA-HC-7079-01Z-00-DX1.5fb22f2a-ee91-4a0d-a696-a72ebb3414b1.svs",
+    "md5sum": "aa6d9fafb7b8fa1d0bb92e1e8d96c457",
+    "file_id": "e5a38d45-00b9-43d9-ad1b-bb94585869f4",
+    "experimental_strategy": "Diagnostic Slide",
+    "file_size": 107434501
+  }
+]
