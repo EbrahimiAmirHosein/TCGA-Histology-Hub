@@ -43,15 +43,15 @@ Supported TCGA projects:
      ```
    - Download diagnostic slides and metadata for TCGA-BRCA only:
      ```bash
-     python download_tcga_slides_by_type_and_projects.py --download-type diagnostic --projects TCGA-BRCA
+     python gdc-WSI-downloader.py --download-type diagnostic --projects TCGA-BRCA
      ```
    - Download both tissue and diagnostic slides for TCGA-BRCA and TCGA-LUAD:
      ```bash
-     python download_tcga_slides_by_type_and_projects.py --download-type both --projects TCGA-BRCA,TCGA-LUAD
+     python gdc-WSI-downloader.py --download-type both --projects TCGA-BRCA,TCGA-LUAD
      ```
    - Download metadata only for all projects:
      ```bash
-     python download_tcga_slides_by_type_and_projects.py --download-type none --projects all
+     python gdc-WSI-downloader.py --download-type none --projects all
      ```
 
 3. **Output**:

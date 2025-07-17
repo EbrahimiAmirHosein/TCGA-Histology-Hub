@@ -5,20 +5,8 @@ from pathlib import Path
 from collections import defaultdict
 import csv
 import argparse
+import hashlib
 
-
-"""
-All project
-python dgdc-WSI-downloader.py --download-type tissue --projects all: Downloads tissue slides and metadata for all 11 projects.
-python gdc-WSI-downloader.py --download-type diagnostic --projects all: Downloads diagnostic slides and metadata for all 11 projects.
-python gdc-WSI-downloader.py --download-type both --projects all: Downloads both tissue and diagnostic slides and metadata for all 11 projects.
-python gdc-WSI-downloader.py --download-type none --projects all: Downloads metadata only for all 11 projects.
-
-Single project:
-python gdc-WSI-downloader.py --download-type tissue --projects TCGA-BRCA: Downloads tissue slides and metadata for TCGA-BRCA only.
-Multiple projects:
-python gdc-WSI-downloader.py --download-type both --projects TCGA-BRCA,TCGA-LUAD,TCGA-OV: Downloads both tissue and diagnostic slides and metadata for TCGA-BRCA, TCGA-LUAD, and TCGA-OV.
-"""
 GDC_API_ENDPOINT = "https://api.gdc.cancer.gov"
 BASE_DIR = "tcga_data"
 METADATA_DIR = os.path.join(BASE_DIR, "metadata")
@@ -80,9 +68,19 @@ def download_file(project_id, file_id, file_name, identifier, md5sum, project_sl
     patient_dir = os.path.join(project_slides_dir, identifier)
     Path(patient_dir).mkdir(exist_ok=True)
     output_path = os.path.join(patient_dir, file_name)
+    
+    # Check if file exists and verify checksum
     if os.path.exists(output_path):
-        print(f"Skipping {file_name} for {project_id}, patient {identifier}, already exists")
-        return
+        with open(output_path, "rb") as f:
+            file_content = f.read()
+            computed_md5 = hashlib.md5(file_content).hexdigest()
+        if computed_md5 == md5sum:
+            print(f"Skipping {file_name} for {project_id}, patient {identifier}, already exists with matching MD5 checksum")
+            return
+        else:
+            print(f"Checksum mismatch for {file_name} for {project_id}, patient {identifier}, re-downloading")
+    
+    # Download file
     url = f"{GDC_API_ENDPOINT}/data/{file_id}"
     response = requests.get(url)
     response.raise_for_status()
