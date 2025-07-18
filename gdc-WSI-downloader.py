@@ -6,6 +6,21 @@ from collections import defaultdict
 import csv
 import argparse
 import hashlib
+import logging
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import pandas as pd
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("tcga_download_log.txt"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 GDC_API_ENDPOINT = "https://api.gdc.cancer.gov"
 BASE_DIR = "tcga_data"
@@ -26,6 +41,7 @@ def create_directories(project_id, download_type):
     return project_metadata_dir, project_slides_dir
 
 def get_manifest(project_id):
+    logger.info(f"Fetching manifest for {project_id}")
     url = f"{GDC_API_ENDPOINT}/files"
     params = {
         "filters": json.dumps({
@@ -44,7 +60,7 @@ def get_manifest(project_id):
     response.raise_for_status()
     return response.json()
 
-def group_by_patient(files, download_type):
+def group_by_patient(files, download_type, patient_ids=None):
     patient_slides = defaultdict(list)
     for file in files:
         experimental_strategy = file.get("experimental_strategy", "")
@@ -55,6 +71,9 @@ def group_by_patient(files, download_type):
         case_id = file.get("case_id")
         submitter_id = file.get("cases", [{}])[0].get("submitter_id", "Unknown")
         identifier = case_id or submitter_id
+        # Filter by patient IDs if provided
+        if patient_ids and identifier not in patient_ids:
+            continue
         patient_slides[identifier].append(file)
     return patient_slides
 
@@ -62,8 +81,14 @@ def save_metadata(project_id, identifier, slides, project_metadata_dir):
     output_path = os.path.join(project_metadata_dir, f"{identifier}.json")
     with open(output_path, "w") as f:
         json.dump(slides, f, indent=2)
-    print(f"Saved metadata for {project_id}, patient {identifier} ({len(slides)} slides)")
+    logger.info(f"Saved metadata for {project_id}, patient {identifier} ({len(slides)} slides)")
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException,)),
+    before_sleep=lambda retry_state: logger.warning(f"Retrying download (attempt {retry_state.attempt_number})...")
+)
 def download_file(project_id, file_id, file_name, identifier, md5sum, project_slides_dir):
     patient_dir = os.path.join(project_slides_dir, identifier)
     Path(patient_dir).mkdir(exist_ok=True)
@@ -75,18 +100,20 @@ def download_file(project_id, file_id, file_name, identifier, md5sum, project_sl
             file_content = f.read()
             computed_md5 = hashlib.md5(file_content).hexdigest()
         if computed_md5 == md5sum:
-            print(f"Skipping {file_name} for {project_id}, patient {identifier}, already exists with matching MD5 checksum")
+            logger.info(f"Skipping {file_name} for {project_id}, patient {identifier}, already exists with matching MD5 checksum")
             return
         else:
-            print(f"Checksum mismatch for {file_name} for {project_id}, patient {identifier}, re-downloading")
+            logger.warning(f"Checksum mismatch for {file_name} for {project_id}, patient {identifier}, re-downloading")
     
     # Download file
+    logger.info(f"Downloading {file_name} for {project_id}, patient {identifier}")
     url = f"{GDC_API_ENDPOINT}/data/{file_id}"
-    response = requests.get(url)
+    response = requests.get(url, stream=True, timeout=30)
     response.raise_for_status()
     with open(output_path, "wb") as f:
-        f.write(response.content)
-    print(f"Downloaded {file_name} for {project_id}, patient {identifier}")
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    logger.info(f"Downloaded {file_name} for {project_id}, patient {identifier}")
 
 def generate_project_summary_csv(project_id, patient_slides):
     csv_path = os.path.join(BASE_DIR, f"{project_id}_summary.csv")
@@ -109,15 +136,15 @@ def generate_project_summary_csv(project_id, patient_slides):
             patient_diagnostic = sum(1 for file in slides if file.get("experimental_strategy") == "Diagnostic Slide")
             writer.writerow([identifier, len(slides), patient_tissue, patient_diagnostic, f"{patient_size_mb:.2f}"])
     
-    print(f"\nGenerated project summary CSV for {project_id}: {csv_path}")
-    print(f"Summary for {project_id}:")
-    print(f"Total number of patients: {len(patient_slides)}")
-    print(f"Total number of slide images: {total_files}")
-    print(f"Tissue slides: {tissue_slides}")
-    print(f"Diagnostic slides: {diagnostic_slides}")
-    print(f"Total size of slides: {total_size_mb:.2f} MB")
-    print(f"File formats: {', '.join(formats)}")
-    print("Note: Slide dimensions (width, height) are not available in GDC metadata. Download SVS files and use OpenSlide to extract dimensions.")
+    logger.info(f"Generated project summary CSV for {project_id}: {csv_path}")
+    logger.info(f"Summary for {project_id}:")
+    logger.info(f"Total number of patients: {len(patient_slides)}")
+    logger.info(f"Total number of slide images: {total_files}")
+    logger.info(f"Tissue slides: {tissue_slides}")
+    logger.info(f"Diagnostic slides: {diagnostic_slides}")
+    logger.info(f"Total size of slides: {total_size_mb:.2f} MB")
+    logger.info(f"File formats: {', '.join(formats)}")
+    logger.info("Note: Slide dimensions (width, height) are not available in GDC metadata. Download SVS files and use OpenSlide to extract dimensions.")
     
     return {
         "project": project_id,
@@ -144,9 +171,9 @@ def generate_all_projects_summary_csv(project_summaries):
                 f"{summary['total_size_mb']:.2f}",
                 summary["file_formats"]
             ])
-    print(f"\nGenerated all projects summary CSV: {csv_path}")
+    logger.info(f"Generated all projects summary CSV: {csv_path}")
 
-def download_tcga_slides(download_type="both", projects="all"):
+def download_tcga_slides(download_type="both", projects="all", patient_ids=None):
     if download_type not in ["tissue", "diagnostic", "both", "none"]:
         raise ValueError("download_type must be 'tissue', 'diagnostic', 'both', or 'none'")
     
@@ -158,37 +185,69 @@ def download_tcga_slides(download_type="both", projects="all"):
         if invalid_projects:
             raise ValueError(f"Invalid project(s): {', '.join(invalid_projects)}. Available projects: {', '.join(ALL_PROJECTS)}")
     
+    # Process patient_ids
+    if patient_ids:
+        if patient_ids.endswith(".csv"):
+            try:
+                df = pd.read_csv(patient_ids)
+                if "Patient ID" not in df.columns:
+                    raise ValueError(f"CSV file {patient_ids} must contain a 'Patient ID' column")
+                patient_id_list = df["Patient ID"].dropna().astype(str).str.strip().tolist()
+                logger.info(f"Loaded {len(patient_id_list)} patient IDs from CSV file: {patient_ids}")
+            except Exception as e:
+                raise ValueError(f"Failed to read CSV file {patient_ids}: {str(e)}")
+        else:
+            patient_id_list = [pid.strip() for pid in patient_ids.split(",")]
+            logger.info(f"Loaded {len(patient_id_list)} patient IDs from command-line input")
+    else:
+        patient_id_list = None
+        logger.info("No patient IDs specified, processing all patients")
+    
     project_summaries = []
     for project_id in project_list:
-        print(f"\nProcessing {project_id}...")
+        logger.info(f"Processing {project_id}...")
         project_metadata_dir, project_slides_dir = create_directories(project_id, download_type)
-        manifest = get_manifest(project_id)
-        files = manifest["data"]["hits"]
-        patient_slides = group_by_patient(files, download_type if download_type != "none" else "both")
+        try:
+            manifest = get_manifest(project_id)
+            files = manifest["data"]["hits"]
+            patient_slides = group_by_patient(files, download_type if download_type != "none" else "both", patient_id_list)
+            
+            if not patient_slides:
+                logger.warning(f"No matching slides found for {project_id} with specified patient IDs")
+            
+            for identifier, slides in patient_slides.items():
+                save_metadata(project_id, identifier, slides, project_metadata_dir)
+                if download_type != "none":
+                    for file in slides:
+                        if (download_type == "tissue" and file.get("experimental_strategy") != "Tissue Slide") or \
+                           (download_type == "diagnostic" and file.get("experimental_strategy") != "Diagnostic Slide"):
+                            continue
+                        file_id = file["file_id"]
+                        file_name = file["file_name"]
+                        md5sum = file["md5sum"]
+                        try:
+                            download_file(project_id, file_id, file_name, identifier, md5sum, project_slides_dir)
+                        except Exception as e:
+                            logger.error(f"Failed to download {file_name} for {project_id}, patient {identifier}: {str(e)}")
+                            continue
+            
+            project_summary = generate_project_summary_csv(project_id, patient_slides)
+            project_summaries.append(project_summary)
         
-        for identifier, slides in patient_slides.items():
-            save_metadata(project_id, identifier, slides, project_metadata_dir)
-            if download_type != "none":
-                for file in slides:
-                    if (download_type == "tissue" and file.get("experimental_strategy") != "Tissue Slide") or \
-                       (download_type == "diagnostic" and file.get("experimental_strategy") != "Diagnostic Slide"):
-                        continue
-                    file_id = file["file_id"]
-                    file_name = file["file_name"]
-                    md5sum = file["md5sum"]
-                    download_file(project_id, file_id, file_name, identifier, md5sum, project_slides_dir)
-        
-        project_summary = generate_project_summary_csv(project_id, patient_slides)
-        project_summaries.append(project_summary)
+        except Exception as e:
+            logger.error(f"Failed to process {project_id}: {str(e)}")
+            continue
     
     generate_all_projects_summary_csv(project_summaries)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Download TCGA metadata and slides by type and projects.")
+    parser = argparse.ArgumentParser(description="Download TCGA metadata and slides by type, projects, and patient IDs.")
     parser.add_argument("--download-type", choices=["tissue", "diagnostic", "both", "none"], default="both",
                         help="Type of slides to download: 'tissue', 'diagnostic', 'both', or 'none' for metadata only")
     parser.add_argument("--projects", default="all",
                         help="Comma-separated TCGA project IDs (e.g., TCGA-BRCA,TCGA-LUAD) or 'all' for all available projects")
+    parser.add_argument("--patient-ids", default=None,
+                        help="Path to a CSV file with 'Patient ID' column or comma-separated patient IDs (e.g., TCGA-XX-XXXX,TCGA-YY-YYYY)")
     args = parser.parse_args()
     
-    download_tcga_slides(args.download_type, args.projects)
+    download_tcga_slides(args.download_type, args.projects, args.patient_ids)
