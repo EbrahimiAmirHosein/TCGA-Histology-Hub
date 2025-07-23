@@ -1,6 +1,8 @@
-# Usage Guide for `download_tcga_slides_by_type_and_projects.py`
+# TCGA-Histology-Hub
+Central hub for TCGA histology data.
 
-This guide explains how to use the `download_tcga_slides_by_type_and_projects.py` script to download metadata and optionally tissue slides, diagnostic slides, or both from TCGA projects via the GDC API, with the ability to filter by specific patient IDs. The script dynamically fetches all TCGA projects with slide images, organizes data by patient, and generates CSV summaries for each project and a combined summary for all projects.
+
+This guide explains how to use the script to download metadata and optionally tissue slides, diagnostic slides, or both from TCGA projects via the GDC API, with the ability to filter by specific patient IDs. The script dynamically fetches all TCGA projects with slide images, organizes data by patient, and generates CSV summaries for each project and a combined summary for all projects.
 
 ## Prerequisites
 
@@ -83,7 +85,6 @@ The script downloads metadata and optionally slide images (SVS format) for TCGA 
 - **CSV Format**: The `--patient-ids` CSV file must have a `Patient ID` column. Other columns are ignored. Ensure IDs match the GDC API format (e.g., `TCGA-XX-XXXX`).
 - **Checksum Verification**: The script skips downloading files that exist with matching MD5 checksums, ensuring no redundant downloads.
 - **Retry Logic**: Failed downloads (e.g., due to connection issues) are retried up to 3 times with exponential backoff.
-- **Slide Dimensions**: Not available in GDC metadata. Use OpenSlide to extract dimensions from downloaded SVS files.
 - **Large Downloads**: Downloading slides (especially with `--download-type both` or `--projects all`) may require significant time and storage due to large file sizes.
 
 ## Troubleshooting
