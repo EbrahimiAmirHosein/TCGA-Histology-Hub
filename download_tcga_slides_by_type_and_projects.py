@@ -26,10 +26,31 @@ GDC_API_ENDPOINT = "https://api.gdc.cancer.gov"
 BASE_DIR = "tcga_data"
 METADATA_DIR = os.path.join(BASE_DIR, "metadata")
 SLIDES_DIR = os.path.join(BASE_DIR, "slides")
-ALL_PROJECTS = [
-    "TCGA-BRCA", "TCGA-LUAD", "TCGA-LUSC", "TCGA-OV", "TCGA-GBM",
-    "TCGA-UCEC", "TCGA-COAD", "TCGA-PRAD", "TCGA-THCA", "TCGA-HNSC", "TCGA-LIHC"
-]
+
+def get_all_projects():
+    logger.info("Fetching all TCGA projects with slide images from GDC API")
+    url = f"{GDC_API_ENDPOINT}/projects"
+    params = {
+        "filters": json.dumps({
+            "op": "and",
+            "content": [
+                {"op": "=", "content": {"field": "program.name", "value": "TCGA"}},
+                {"op": "in", "content": {"field": "data_categories.data_type", "value": ["Slide Image"]}}
+            ]
+        }),
+        "fields": "project_id",
+        "format": "json",
+        "size": 1000
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        projects = [hit["project_id"] for hit in response.json()["data"]["hits"]]
+        logger.info(f"Found {len(projects)} TCGA projects with slide images: {', '.join(projects)}")
+        return projects
+    except Exception as e:
+        logger.error(f"Failed to fetch TCGA projects: {str(e)}")
+        raise
 
 def create_directories(project_id, download_type):
     project_metadata_dir = os.path.join(METADATA_DIR, project_id)
@@ -177,13 +198,16 @@ def download_tcga_slides(download_type="both", projects="all", patient_ids=None)
     if download_type not in ["tissue", "diagnostic", "both", "none"]:
         raise ValueError("download_type must be 'tissue', 'diagnostic', 'both', or 'none'")
     
+    # Fetch all TCGA projects with slide images
+    all_projects = get_all_projects()
+    
     if projects.lower() == "all":
-        project_list = ALL_PROJECTS
+        project_list = all_projects
     else:
         project_list = [p.strip() for p in projects.split(",")]
-        invalid_projects = [p for p in project_list if p not in ALL_PROJECTS]
+        invalid_projects = [p for p in project_list if p not in all_projects]
         if invalid_projects:
-            raise ValueError(f"Invalid project(s): {', '.join(invalid_projects)}. Available projects: {', '.join(ALL_PROJECTS)}")
+            raise ValueError(f"Invalid project(s): {', '.join(invalid_projects)}. Available projects: {', '.join(all_projects)}")
     
     # Process patient_ids
     if patient_ids:
@@ -245,7 +269,7 @@ if __name__ == "__main__":
     parser.add_argument("--download-type", choices=["tissue", "diagnostic", "both", "none"], default="both",
                         help="Type of slides to download: 'tissue', 'diagnostic', 'both', or 'none' for metadata only")
     parser.add_argument("--projects", default="all",
-                        help="Comma-separated TCGA project IDs (e.g., TCGA-BRCA,TCGA-LUAD) or 'all' for all available projects")
+                        help="Comma-separated TCGA project IDs (e.g., TCGA-BRCA,TCGA-LUAD) or 'all' for all available projects with slide images")
     parser.add_argument("--patient-ids", default=None,
                         help="Path to a CSV file with 'Patient ID' column or comma-separated patient IDs (e.g., TCGA-XX-XXXX,TCGA-YY-YYYY)")
     args = parser.parse_args()
