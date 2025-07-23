@@ -26,6 +26,12 @@ GDC_API_ENDPOINT = "https://api.gdc.cancer.gov"
 BASE_DIR = "tcga_data"
 METADATA_DIR = os.path.join(BASE_DIR, "metadata")
 SLIDES_DIR = os.path.join(BASE_DIR, "slides")
+FALLBACK_PROJECTS = [
+    "TCGA-BLCA", "TCGA-BRCA", "TCGA-CESC", "TCGA-COAD", "TCGA-LUAD",
+    "TCGA-LUSC", "TCGA-PAAD", "TCGA-PRAD", "TCGA-READ", "TCGA-SKCM",
+    "TCGA-STAD", "TCGA-UCEC", "TCGA-UVM", "TCGA-GBM", "TCGA-HNSC",
+    "TCGA-LIHC", "TCGA-OV", "TCGA-THCA"
+]
 
 def get_all_projects():
     logger.info("Fetching all TCGA projects with slide images from GDC API")
@@ -35,22 +41,29 @@ def get_all_projects():
             "op": "and",
             "content": [
                 {"op": "=", "content": {"field": "program.name", "value": "TCGA"}},
-                {"op": "in", "content": {"field": "data_categories.data_type", "value": ["Slide Image"]}}
+                {"op": "in", "content": {"field": "data_categories.data_category", "value": ["Biospecimen"]}}
             ]
         }),
-        "fields": "project_id",
+        "fields": "project_id,data_categories.data_type",
         "format": "json",
         "size": 1000
     }
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=30)
         response.raise_for_status()
-        projects = [hit["project_id"] for hit in response.json()["data"]["hits"]]
-        logger.info(f"Found {len(projects)} TCGA projects with slide images: {', '.join(projects)}")
-        return projects
+        projects = []
+        for hit in response.json()["data"]["hits"]:
+            data_types = [dt.get("data_type") for dt in hit.get("data_categories", [])]
+            if "Slide Image" in data_types:
+                projects.append(hit["project_id"])
+        if not projects:
+            logger.warning("No TCGA projects with slide images found via API. Using fallback project list.")
+            projects = FALLBACK_PROJECTS
+        logger.info(f"Found {len(projects)} TCGA projects with slide images: {', '.join(sorted(projects))}")
+        return sorted(projects)
     except Exception as e:
-        logger.error(f"Failed to fetch TCGA projects: {str(e)}")
-        raise
+        logger.error(f"Failed to fetch TCGA projects: {str(e)}. Using fallback project list.")
+        return FALLBACK_PROJECTS
 
 def create_directories(project_id, download_type):
     project_metadata_dir = os.path.join(METADATA_DIR, project_id)
@@ -179,6 +192,10 @@ def generate_project_summary_csv(project_id, patient_slides):
 
 def generate_all_projects_summary_csv(project_summaries):
     csv_path = os.path.join(BASE_DIR, "all_tcga_projects_summary.csv")
+    Path(BASE_DIR).mkdir(parents=True, exist_ok=True)
+    if not project_summaries:
+        logger.warning(f"No project summaries to write to {csv_path}")
+        return
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Project", "Total Patients", "Total Slides", "Tissue Slides", "Diagnostic Slides", "Total Size (MB)", "File Formats"])
@@ -200,6 +217,9 @@ def download_tcga_slides(download_type="both", projects="all", patient_ids=None)
     
     # Fetch all TCGA projects with slide images
     all_projects = get_all_projects()
+    
+    if not all_projects:
+        raise ValueError("No TCGA projects with slide images available. Check GDC API or network connection.")
     
     if projects.lower() == "all":
         project_list = all_projects
@@ -269,7 +289,7 @@ if __name__ == "__main__":
     parser.add_argument("--download-type", choices=["tissue", "diagnostic", "both", "none"], default="both",
                         help="Type of slides to download: 'tissue', 'diagnostic', 'both', or 'none' for metadata only")
     parser.add_argument("--projects", default="all",
-                        help="Comma-separated TCGA project IDs (e.g., TCGA-BRCA,TCGA-LUAD) or 'all' for all available projects with slide images")
+                        help="Comma-separated TCGA project IDs (e.g., TCGA-BLCA,TCGA-BRCA) or 'all' for all available projects with slide images")
     parser.add_argument("--patient-ids", default=None,
                         help="Path to a CSV file with 'Patient ID' column or comma-separated patient IDs (e.g., TCGA-XX-XXXX,TCGA-YY-YYYY)")
     args = parser.parse_args()

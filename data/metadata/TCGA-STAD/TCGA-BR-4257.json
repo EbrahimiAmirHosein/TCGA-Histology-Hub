@@ -1,0 +1,72 @@
+[
+  {
+    "id": "72abe733-2484-4da4-8d1e-dd9776955802",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-BR-4257"
+      }
+    ],
+    "file_name": "TCGA-BR-4257-01A-01-BS1.593632c9-b59d-43d5-bc04-4af610e9fdb6.svs",
+    "md5sum": "2afd4cbadf27abe8c12f91fca0ba8991",
+    "file_id": "72abe733-2484-4da4-8d1e-dd9776955802",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 308259185
+  },
+  {
+    "id": "e711e8a7-dde1-441e-81b4-61dd289d4dba",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-BR-4257"
+      }
+    ],
+    "file_name": "TCGA-BR-4257-11A-01-BS1.84292189-d1e6-4ee7-8db3-499db9a1e746.svs",
+    "md5sum": "e0078cb7745d7bda7b50dc22bcfaadd0",
+    "file_id": "e711e8a7-dde1-441e-81b4-61dd289d4dba",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 467250969
+  },
+  {
+    "id": "981735cd-25aa-4528-ac82-8a00654d54a5",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-BR-4257"
+      }
+    ],
+    "file_name": "TCGA-BR-4257-01A-01-TS1.5ecb52c0-7329-4f27-bfee-1b8cfd8f25a2.svs",
+    "md5sum": "430811e22893c122fad228ce1a05310d",
+    "file_id": "981735cd-25aa-4528-ac82-8a00654d54a5",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 292502269
+  },
+  {
+    "id": "4ce247ea-25e6-4505-8651-310e473ab090",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-BR-4257"
+      }
+    ],
+    "file_name": "TCGA-BR-4257-11A-01-TS1.7634bb87-e964-47d8-95e3-a37a55cc5646.svs",
+    "md5sum": "1c4dba2df5e19f66ec0449518ac9d6b7",
+    "file_id": "4ce247ea-25e6-4505-8651-310e473ab090",
+    "experimental_strategy": "Tissue Slide",
+    "file_size": 463086765
+  },
+  {
+    "id": "4223bd71-e3b1-4b59-a235-4ff0cc614b62",
+    "data_format": "SVS",
+    "cases": [
+      {
+        "submitter_id": "TCGA-BR-4257"
+      }
+    ],
+    "file_name": "TCGA-BR-4257-01Z-00-DX1.fd97fe9a-2e87-455d-9555-38b6621433d1.svs",
+    "md5sum": "bc08a694eb9dd67f803db628f8229c2b",
+    "file_id": "4223bd71-e3b1-4b59-a235-4ff0cc614b62",
+    "experimental_strategy": "Diagnostic Slide",
+    "file_size": 480888
+  }
+]
